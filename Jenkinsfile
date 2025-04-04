@@ -1,53 +1,45 @@
 pipeline {
     agent any
+
     environment {
-        AZURE_CREDENTIALS = credentials('azure-service-principal')
+        AZURE_CREDENTIALS_ID = 'azure-credentials' // Jenkins Azure credentials ID
+        RESOURCE_GROUP = 'rg-py-jenkins'
+        APP_SERVICE_PLAN = 'app-service-py'
+        WEB_APP_NAME = 'webApp-py'
+        LOCATION = 'eastus'
+        RUNTIME_STACK = 'PYTHON|3.9'
     }
+
     stages {
-        stage('Checkout') {
+        stage('Login to Azure') {
             steps {
-                git branch: 'main', url: 'https://github.com/Mahimajain01/python-WebApi.git'
-            }
-        }
-        stage('Build') {
-            steps {
-                script {
-                    if (isUnix()) {
-                        // Run shell commands if on a Unix-based system (Linux/macOS)
-                        sh 'echo "Building the project on a Unix system"'
-                    } else {
-                        // Run batch commands if on Windows
-                        bat 'echo "Building the project on a Windows system"'
-                    }
+                withAzure(credentialsId: AZURE_CREDENTIALS_ID) {
+                    bat 'az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%'
                 }
             }
         }
 
-        stage('Publish') {
+        stage('Create Resource Group') {
             steps {
-                script {
-                    if (isUnix()) {
-                        // Example Unix command
-                        sh 'echo "Publishing on Unix"'
-                    } else {
-                        // Example Windows command
-                        bat 'echo "Publishing on Windows"'
-                    }
-                }
+                bat 'az group create --name %RESOURCE_GROUP% --location %LOCATION%'
             }
         }
 
-        stage('Deploy to Azure') {
+        stage('Create App Service Plan') {
             steps {
-                script {
-                    if (isUnix()) {
-                        // Example Unix command for deployment
-                        sh 'echo "Deploying to Azure from Unix"'
-                    } else {
-                        // Example Windows command for deployment
-                        bat 'echo "Deploying to Azure from Windows"'
-                    }
-                }
+                bat 'az appservice plan create --name %APP_SERVICE_PLAN% --resource-group %RESOURCE_GROUP% --sku F1 --is-linux'
+            }
+        }
+
+        stage('Create Web App') {
+            steps {
+                bat 'az webapp create --resource-group %RESOURCE_GROUP% --plan %APP_SERVICE_PLAN% --name %WEB_APP_NAME% --runtime "%RUNTIME_STACK%"'
+            }
+        }
+
+        stage('Deploy App to Azure') {
+            steps {
+                bat 'az webapp deployment source config-zip --resource-group %RESOURCE_GROUP% --name %WEB_APP_NAME% --src my-app.zip'
             }
         }
     }
