@@ -2,32 +2,38 @@ pipeline {
     agent any
     environment {
         AZURE_CREDENTIALS = credentials('azure-service-principal')
-        SHELL = 'C:\Program Files\Git\usr\bin\sh.exe'
     }
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Mahimajain01/python-WebApi.git'
+                git branch: 'main', url: 'https://github.com/Mahimajain01/python-webapp.git'
             }
         }
         stage('Build') {
             steps {
-                sh 'echo Building on Windows'
+                bat 'echo Hello from Windows'
+            }
+        }
+        stage('Publish') {
+            steps {
+                bat 'powershell -Command "Compress-Archive -Path * -DestinationPath app.zip -Force"'
             }
         }
 
-        stage('Publish') {
+                stage('Deploy to Azure') {
             steps {
-                sh 'zip -r app.zip .'
-            }
-        }
-        stage('Deploy to Azure') {
-            steps {
-                withCredentials([azureServicePrincipal('azure-service-principal')]) {
-                    sh 'az login --service-principal -u $AZURE_CREDENTIALS_USR -p $AZURE_CREDENTIALS_PSW --tenant $AZURE_CREDENTIALS_TEN'
-                    sh 'az webapp up --name myPythonApp --resource-group myResourceGroup --runtime "PYTHON:3.9" --src-path .'
+                withCredentials([
+                    string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
+                    string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                    string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID')
+                ]) {
+                    bat """
+                    az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
+                    az webapp up --name myPythonApp --resource-group myResourceGroup --runtime "PYTHON:3.9" --src-path .
+                    """
                 }
             }
         }
+
     }
 }
