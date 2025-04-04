@@ -11,9 +11,10 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'pip install -r requirements.txt'
+                bat 'echo Building on Windows'
             }
         }
+
         stage('Publish') {
             steps {
                 sh 'zip -r app.zip .'
