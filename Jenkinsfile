@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         AZURE_CREDENTIALS = credentials('azure-service-principal')
+        SHELL = 'C:\Program Files\Git\usr\bin\sh.exe'
     }
     stages {
         stage('Checkout') {
