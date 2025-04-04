@@ -11,20 +11,20 @@ pipeline {
         }
         stage('Build') {
             steps {
-                bat 'echo Building on Windows'
+                sh 'echo Building on Windows'
             }
         }
 
         stage('Publish') {
             steps {
-                bat 'zip -r app.zip .'
+                sh 'zip -r app.zip .'
             }
         }
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal('azure-service-principal')]) {
-                    bat 'az login --service-principal -u $AZURE_CREDENTIALS_USR -p $AZURE_CREDENTIALS_PSW --tenant $AZURE_CREDENTIALS_TEN'
-                    bat 'az webapp up --name myPythonApp --resource-group myResourceGroup --runtime "PYTHON:3.9" --src-path .'
+                    sh 'az login --service-principal -u $AZURE_CREDENTIALS_USR -p $AZURE_CREDENTIALS_PSW --tenant $AZURE_CREDENTIALS_TEN'
+                    sh 'az webapp up --name myPythonApp --resource-group myResourceGroup --runtime "PYTHON:3.9" --src-path .'
                 }
             }
         }
